@@ -88,6 +88,8 @@ from ultralytics import YOLO
 
 # Load the YOLOv8 model
 model = YOLO('yolov8n.pt')  # or yolov8s.pt, depending on resources
+🔍 Text Extraction (OCR)
+We use Google Cloud Vision API to extract text from detected bounding boxes for attributes like
 
 # Train the model
 model.train(
