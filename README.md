@@ -1,21 +1,38 @@
 # Grid-6.0
 Product Detection and Attribute Extraction using YOLOv8
-This project involves training a custom object detection model using YOLOv8 to detect daily-use packed products and extract relevant attributes such as brand names, net weight, and other details from the product packaging.
 
+
+
+A project aimed at detecting daily-use packed products and extracting relevant attributes (such as brand names, net weight, and MRP) from product packaging using YOLOv8.
+
+📖 Table of Contents
 Project Overview
-The goal of the project is to use computer vision techniques to:
-
-Detect products from images of packaged goods.
-Extract key attributes like product name, brand, net weight, MRP, and more.
-Use YOLOv8 to train on a custom dataset of 40+ daily-use products with over 2000 annotated images.
-Dataset
-The dataset consists of:
-
-Images: 2000+ images of daily-use products (e.g., Red Label tea, Johnson's baby soap, Kimia dates, etc.).
-Labels: Corresponding annotations for each image, including bounding boxes for product detection and text extraction areas (brand name, net weight, etc.).
 Dataset Structure
-The dataset is structured as follows:
+Annotation Details
+Training the Model
+Text Extraction (OCR)
+Results
+Future Improvements
+Project Structure
+License
+Contact
+🚀 Project Overview
+This project uses YOLOv8 for object detection and integrates Google Cloud Vision API for Optical Character Recognition (OCR) to extract information like:
 
+Product Name
+Brand
+Net Weight
+Expiration Date, etc.
+With a dataset of over 2000+ images and 40+ different products, the goal is to train a robust model that can detect and extract product details from packaging.
+
+🗂️ Dataset Structure
+The dataset consists of product images and their corresponding label files with bounding boxes for the following attributes:
+
+Product Name
+Brand
+Net Weight
+Other Packaging Details
+Directory Structure:
 bash
 Copy code
 /Dataset
@@ -23,106 +40,81 @@ Copy code
         /train          # Training images
         /val            # Validation images
     /labels
-        /train          # Labels for training images
-        /val            # Labels for validation images
-Each image has a corresponding label file in the labels directory, with bounding box coordinates and class IDs.
+        /train          # Training labels (bounding boxes)
+        /val            # Validation labels
+📝 Annotation Details
+The bounding box annotations follow the YOLOv8 format, which includes:
 
-Annotation
-The products and their attributes are annotated using bounding boxes. Each product can have multiple attributes such as:
+Class ID
+Bounding Box Center (x, y)
+Width and Height (normalized to image dimensions)
+Example Annotation (YOLOv8 format):
 
-Product Name: e.g., Red Label
-Brand Name: e.g., Brooke Bond
-Net Weight: e.g., 1 kg
-Variant: e.g., Garlic Mayonnaise, Dark Fantasy Choco Fils
-Annotation Format (YOLOv8):
-Each label file contains bounding box information and class IDs in the following format:
-
-php
+plaintext
 Copy code
 <class_id> <x_center> <y_center> <width> <height>
-Where the coordinates are normalized between 0 and 1.
+Classes:
+0: Kimia Dates
+1: Kimia Dates Details
+...
+166: Red Label Net
+🏋️‍♂️ Training the Model
+We use YOLOv8 for training, leveraging its ability to handle object detection efficiently.
 
-Model
-We use YOLOv8, a state-of-the-art object detection model, to detect products and their attributes from images.
+Steps to Train:
+Install YOLOv8:
 
-YOLOv8 Configuration
-The data.yaml file used to configure the training contains:
+bash
+Copy code
+pip install ultralytics
+Prepare your data.yaml file:
 
-names: List of all the product names and attributes to be detected.
-train: Path to the training images.
-val: Path to the validation images.
-nc: Number of classes (167 in this case).
-data.yaml Example:
 yaml
 Copy code
 names:
   0: Kimia Dates
   1: Kimia Dates Details
-  2: Kimia Dates date
   ...
-  166: red label net
+  166: Red Label Net
 
-train: /content/drive/MyDrive/mohammed_Arbaz/Dataset/images/train
-val: /content/drive/MyDrive/mohammed_Arbaz/Dataset/images/val
-nc: 167
-Training the Model
-The model is trained using the YOLOv8 framework. Here are the steps to train the model:
-
-Installation
-Install YOLOv8 by running:
-
-bash
-Copy code
-pip install ultralytics
-Install other necessary libraries:
-
-bash
-Copy code
-pip install opencv-python pillow google-cloud-vision
-Training Command
-Run the following command to start training:
+train: /path/to/images/train
+val: /path/to/images/val
+Train the Model:
 
 python
 Copy code
 from ultralytics import YOLO
 
 # Load the YOLOv8 model
-model = YOLO('yolov8n.pt')  # or yolov8s.pt, depending on resources
-🔍 Text Extraction (OCR)
-We use Google Cloud Vision API to extract text from detected bounding boxes for attributes like
+model = YOLO('yolov8n.pt')
 
-# Train the model
-model.train(
-    data='/content/drive/MyDrive/mohammed_Arbaz/Dataset/data.yaml',  # Path to data.yaml
-    epochs=50,          # Number of epochs
-    imgsz=640,          # Image size
-    project='/content/drive/MyDrive/mohammed_Arbaz/Results',  # Save results here
-    name='product_detection'  # Experiment name
-)
-Model Results
-After training, the best-performing weights will be saved in the /weights directory under the specified project. These weights can be used for inference or further fine-tuning.
-
-Inference
-To perform inference using the trained model:
+# Train
+model.train(data='data.yaml', epochs=50, imgsz=640, project='Results', name='product_detection')
+Inference:
+Once the model is trained, use it to predict new images:
 
 python
 Copy code
-# Load the trained model
-model = YOLO('/content/drive/MyDrive/mohammed_Arbaz/Results/product_detection/weights/best.pt')
-
-# Run inference on a new image
 results = model.predict(source='/path/to/test_image.jpg', save=True)
-Text Extraction (OCR)
-After detecting the product and bounding boxes for attributes like brand and net weight, you can use Google Cloud Vision API for Optical Character Recognition (OCR) to extract text from the images.
+🔍 Text Extraction (OCR)
+We use Google Cloud Vision API to extract text from detected bounding boxes for attributes like:
 
-Google Cloud Vision Setup
-Set up Google Cloud Vision API and provide credentials:
+MRP
+Brand
+Net Weight
+OCR Setup:
+Install the Google Cloud Vision client:
+
+bash
+Copy code
+pip install google-cloud-vision
+Set up your credentials:
 
 python
 Copy code
 import os
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/path/to/credentials.json'
-Extract text from detected bounding boxes:
+Text Extraction:
 
 python
 Copy code
@@ -135,7 +127,18 @@ def detect_text(image_path):
     image = vision.Image(content=content)
     response = client.text_detection(image=image)
     return response.text_annotations[0].description if response.text_annotations else None
-Project Structure
+📊 Results
+After training for 50 epochs, the model achieved:
+
+mAP50: 98%
+mAP50-95: 79.9%
+The model successfully detects products and extracts key attributes from their packaging.
+
+🔧 Future Improvements
+Model Fine-Tuning: Continue improving the model with more data and experimenting with larger YOLOv8 variants.
+Text Extraction Accuracy: Improve the OCR by enhancing preprocessing for better text clarity.
+Support for Multi-Product Detection: Expand the model to detect and extract details from multiple products in a single image.
+📂 Project Structure
 bash
 Copy code
 /Dataset
@@ -151,15 +154,11 @@ Copy code
 data.yaml               # Dataset configuration file
 train.txt               # Paths to training images
 README.md               # Project documentation
-Future Improvements
-Fine-tuning the Model: Improve the accuracy by further fine-tuning the model with more annotated data or using a larger YOLOv8 variant.
-Multi-Product Detection: Enhance the model to detect multiple products in one image.
-Optimize OCR Performance: Integrate more advanced OCR techniques for accurate text extraction from the product labels.
-License
-This project is licensed under the MIT License. See the LICENSE file for more details.
+📜 License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-Contact
-For any questions or collaboration requests, please reach out to:
+📧 Contact
+For any inquiries or collaboration, feel free to reach out:
 
 Name: Mohammed Arbaz
 Email: mdarbaz3636@gmail.com
